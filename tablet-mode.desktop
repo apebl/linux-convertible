@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Tablet Mode
+Comment=Toggle tablet mode
+Exec=convertible --toggle
+Icon=tablet-symbolic
+Terminal=false

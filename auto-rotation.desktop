@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Screen Auto-rotation Script
+Exec=auto-rotation
+Icon=applications-graphics
+Terminal=false

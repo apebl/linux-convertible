@@ -1,0 +1,69 @@
+#!/bin/sh
+
+#
+# Auto-rotation script
+#
+# Modified from:
+# https://gist.githubusercontent.com/ei-grad/4d9d23b1463a99d24a8d/raw/rotate.py
+#
+
+BASEDIR="$HOME/.convertible"
+mkdir -p "$BASEDIR"
+
+LOCKFILE="$BASEDIR/.autorot.lock"
+ROTLOCK_FILE="$BASEDIR/.rotation-lock"
+
+(
+flock -n 9 || exit 1
+
+OUTPUT="$(xrandr | grep -oP '^([A-Za-z0-9_-]+)(?= connected primary)')"
+if [ -z "$OUTPUT" ]; then
+    echo "Xrandr output not found" >&2
+    exit 1
+fi
+
+if ! cat /sys/bus/iio/devices/iio\:device*/name | grep -q accel; then
+    echo "Accellerator not found" >&2
+    exit 1
+fi
+
+for dev in /sys/bus/iio/devices/iio\:device*; do
+	[ -z "$(cat "$dev/name" | grep accel)" ] || break
+done
+
+scale=$(cat "$dev/in_accel_scale")
+G=7 # (m^2 / s) sensibility, gravity trigger
+state=none
+
+while true; do
+    [ ! -f "$ROTLOCK_FILE" ] && { sleep 1; continue; }
+    rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
+    [ "$rotlock" = "locked" ] && { sleep 1; continue; }
+
+    ax=$(cat "$dev/in_accel_x_raw")
+    ay=$(cat "$dev/in_accel_y_raw")
+    ax=$(echo "$ax * $scale" | bc)
+    ay=$(echo "$ay * $scale" | bc)
+
+    if [ "$state" != "normal" ] && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
+        state=normal
+        xrandr --output "$OUTPUT" --rotate normal
+        "$BASEDIR/landscape"
+    elif [ $state != right ] && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
+        state=right
+        xrandr --output "$OUTPUT" --rotate right
+        "$BASEDIR/portrait"
+    elif [ $state != inverted ] && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
+        state=inverted
+        xrandr --output "$OUTPUT" --rotate inverted
+        "$BASEDIR/landscape"
+    elif [ $state != left ] && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
+        state=left
+        xrandr --output "$OUTPUT" --rotate left
+        "$BASEDIR/portrait"
+    fi
+    sleep 1
+done
+
+) 9>"$LOCKFILE"
+

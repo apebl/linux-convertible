@@ -1,0 +1,7 @@
+#!/bin/sh
+
+#
+# A callback script called when switched to landscape orientation
+#
+
+gsettings set org.gnome.shell.extensions.dash-to-dock dock-position LEFT

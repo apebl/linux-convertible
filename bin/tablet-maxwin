@@ -1,0 +1,26 @@
+#!/bin/sh
+set -e
+
+BASEDIR="$HOME/.convertible"
+mkdir -p "$BASEDIR"
+
+MODEFILE="$BASEDIR/.mode"
+LOCKFILE="$BASEDIR/.maxwin.lock"
+
+if [ ! -f "$MODEFILE" ]; then
+    echo "$MODEFILE not found" >&2
+    exit 1
+fi
+
+(
+flock -n 9 || exit 1
+
+while true; do
+    [ -f "$MODEFILE" ] || exit 1
+    mode="$(cat "$MODEFILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
+    [ "$mode" = "tablet" ] || exit
+    wmctrl -ir $(xdotool getactivewindow) -b add,maximized_vert,maximized_horz
+    sleep 0.2
+done
+
+) 9>"$LOCKFILE"

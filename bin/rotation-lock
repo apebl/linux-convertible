@@ -1,0 +1,49 @@
+#!/bin/sh
+set -e
+
+usage() {
+    echo "Usage: rotation-lock [option]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help  Show help message"
+    echo "  --lock      Lock screen rotation"
+    echo "  --unlock    Unlock screen rotation"
+    echo "  --toggle    Toggle screen rotation lock"
+}
+
+BASEDIR="$HOME/.convertible"
+mkdir -p "$BASEDIR"
+
+ROTLOCK_FILE="$BASEDIR/.rotation-lock"
+
+case "$1" in
+-h|--help)
+    usage
+    exit 1
+    ;;
+--lock)
+    echo "locked" > "$ROTLOCK_FILE"
+    ;;
+--unlock)
+    echo "unlocked" > "$ROTLOCK_FILE"
+    ;;
+--toggle)
+    if [ ! -f "$ROTLOCK_FILE" ]; then
+        echo "locked" > "$ROTLOCK_FILE"
+        notify-send --icon=rotation-locked-symbolic "Rotation locked" "Screen rotation locked."
+    else
+        rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
+        if [ "$rotlock" = "locked" ]; then
+            echo "unlocked" > "$ROTLOCK_FILE"
+            notify-send --icon=rotation-allowed-symbolic "Rotation unlocked" "Screen rotation unlocked."
+        else
+            echo "locked" > "$ROTLOCK_FILE"
+            notify-send --icon=rotation-locked-symbolic "Rotation locked" "Screen rotation locked."
+        fi
+    fi
+    ;;
+*)
+    usage
+    exit 1
+    ;;
+esac

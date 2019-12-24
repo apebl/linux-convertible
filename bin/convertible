@@ -1,0 +1,51 @@
+#!/bin/sh
+set -e
+
+usage() {
+    echo "Usage: convertible [option]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help  Show help message"
+    echo "  --laptop    Switch to laptop mode"
+    echo "  --tablet    Switch to tablet mode"
+    echo "  --toggle    Toggle laptop/tablet mode"
+}
+
+BASEDIR="$HOME/.convertible"
+mkdir -p "$BASEDIR"
+MODEFILE="$BASEDIR/.mode"
+
+case "$1" in
+-h|--help)
+    usage
+    exit 1
+    ;;
+--laptop)
+    prev_mode="tablet"
+    ;;
+--tablet)
+    prev_mode="laptop"
+    ;;
+--toggle)
+    if [ ! -f "$MODEFILE" ]; then
+        prev_mode="laptop"
+    else
+        prev_mode="$(cat "$MODEFILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
+    fi
+    ;;
+*)
+    usage
+    exit 1
+    ;;
+esac
+
+if [ "$prev_mode" = "laptop" ]; then
+    echo "tablet" > "$MODEFILE"
+    "$BASEDIR/tablet"
+    tablet-maxwin &
+    notify-send --icon=tablet-symbolic "Tablet mode" "Switched to tablet mode."
+else
+    echo "laptop" > "$MODEFILE"
+    "$BASEDIR/laptop"
+    notify-send --icon=computer-symbolic "Laptop mode" "Switched to laptop mode."
+fi

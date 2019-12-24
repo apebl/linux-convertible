@@ -1,0 +1,7 @@
+#!/bin/sh
+
+#
+# A callback script called when switched to portrait orientation
+#
+
+gsettings set org.gnome.shell.extensions.dash-to-dock dock-position BOTTOM

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Rotation Lock
+Comment=Toggle screen rotation lock
+Exec=rotation-lock --toggle
+Icon=rotation-locked-symbolic
+Terminal=false
