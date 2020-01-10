@@ -1,6 +1,6 @@
 # linux-convertible
 
-Scripts for using 2-in-1 convertible laptops with Linux
+Tools for using 2-in-1 convertible laptops with Linux
 
 ## Features
 
@@ -8,6 +8,7 @@ Scripts for using 2-in-1 convertible laptops with Linux
 - Rotation lock
 - Auto-maximizing windows in tablet mode
 - Toggle between laptop and tablet mode manually
+- Recovering xrandr orientation and scaling from abnormal xrandr changes
 
 ## Requirements
 
