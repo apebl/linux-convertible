@@ -11,7 +11,7 @@ cp -ip bin/* "$HOME/.local/bin"
 cp -ip callbacks/* "$HOME/.convertible"
 cp -ip tablet-mode.desktop "$HOME/.local/share/applications"
 cp -ip rotation-lock.desktop "$HOME/.local/share/applications"
-cp -ip auto-rotation.desktop "$HOME/.config/autostart"
+cp -ip convertible-startup.desktop "$HOME/.config/autostart"
 
 sh find-devs.sh | while read -r dev; do
     echo "xinput enable '$dev'" >> "$HOME/.convertible/laptop"

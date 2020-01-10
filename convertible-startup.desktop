@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Linux Convertible Startup
+Comment=Linux convertible startup script
+Exec=convertible-startup
+Icon=applications-graphics
+Terminal=false
