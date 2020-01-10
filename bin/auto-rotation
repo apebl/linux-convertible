@@ -3,7 +3,7 @@
 #
 # Auto-rotation script
 #
-# Modified from:
+# Based on:
 # https://gist.githubusercontent.com/ei-grad/4d9d23b1463a99d24a8d/raw/rotate.py
 #
 
@@ -33,10 +33,31 @@ done
 
 scale=$(cat "$dev/in_accel_scale")
 G=7 # (m^2 / s) sensibility, gravity trigger
-state=none
 
+input_devs=$(xinput list |
+    grep -oP '(?<=↳ )[A-Za-z0-9_: -]+?(?=\s*id=)' |
+    grep -iP 'wacom|pen|stylus|finger|touch|trackpoint')
+
+rotate() {
+    rot=$1
+    xrandr --output "$OUTPUT" --rotate $rot
+    while read -r input_dev
+    do
+        if [ $rot = normal ]; then
+            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1
+        elif [ $rot = right ]; then
+            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
+        elif [ $rot = inverted ]; then
+            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" -1 0 1 0 -1 1 0 0 1
+        elif [ $rot = left ]; then
+            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
+        fi
+    done <<<"$input_devs"
+}
+
+first=true
 while true; do
-    [ ! -f "$ROTLOCK_FILE" ] && { sleep 1; continue; }
+    [ ! -f "$ROTLOCK_FILE" ] && echo unlocked > "$ROTLOCK_FILE"
     rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
     [ "$rotlock" = "locked" ] && { sleep 1; continue; }
 
@@ -45,23 +66,24 @@ while true; do
     ax=$(echo "$ax * $scale" | bc)
     ay=$(echo "$ay * $scale" | bc)
 
-    if [ "$state" != "normal" ] && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
-        state=normal
-        xrandr --output "$OUTPUT" --rotate normal
+    state="$(xrandr |
+        grep -oP '^[A-Za-z0-9_-]+ connected primary [0-9x+]+ ([a-z]+)' |
+        grep -oP '(right|inverted|left)$')"
+
+    if ([ ! -z "$state" ] || $first) && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
+        rotate normal
         "$BASEDIR/landscape"
-    elif [ $state != right ] && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
-        state=right
-        xrandr --output "$OUTPUT" --rotate right
+    elif ([ "$state" != right ] || $first) && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
+        rotate right
         "$BASEDIR/portrait"
-    elif [ $state != inverted ] && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
-        state=inverted
-        xrandr --output "$OUTPUT" --rotate inverted
+    elif ([ "$state" != inverted ] || $first) && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
+        rotate inverted
         "$BASEDIR/landscape"
-    elif [ $state != left ] && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
-        state=left
-        xrandr --output "$OUTPUT" --rotate left
+    elif ([ "$state" != left ] || $first) && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
+        rotate left
         "$BASEDIR/portrait"
     fi
+    first=false
     sleep 1
 done
 
