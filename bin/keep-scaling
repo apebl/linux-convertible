@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#
+# A script to keep xrandr scaling
+#
+
+set -e
+
+BASEDIR="$HOME/.convertible"
+mkdir -p "$BASEDIR"
+
+LOCKFILE="$BASEDIR/.scale.lock"
+
+(
+flock -n 9 || exit 1
+
+OUTPUT="$(xrandr | grep -oP '^([A-Za-z0-9_-]+)(?= connected primary)')"
+PIXELS="$(xrandr | grep -oP '(?<=connected primary )([0-9x]+)')"
+
+while true; do
+    xrandr --output "$OUTPUT" --scale-from "$PIXELS"
+    sleep 1
+done
+
+) 9>"$LOCKFILE"

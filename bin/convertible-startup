@@ -12,3 +12,4 @@ else
 fi
 
 auto-rotation &
+keep-scaling &
