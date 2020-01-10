@@ -1,4 +1,11 @@
 #!/bin/sh
+
+#
+# A script for auto-maximizing windows in table mode
+#
+# It is automatically terminated when switched to laptop mode.
+#
+
 set -e
 
 BASEDIR="$HOME/.convertible"
