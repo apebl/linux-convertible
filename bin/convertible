@@ -42,7 +42,6 @@ esac
 if [ "$prev_mode" = "laptop" ]; then
     echo "tablet" > "$MODEFILE"
     "$BASEDIR/tablet"
-    tablet-maxwin &
     notify-send --icon=tablet-symbolic "Tablet mode" "Switched to tablet mode."
 else
     echo "laptop" > "$MODEFILE"

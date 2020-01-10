@@ -58,5 +58,6 @@ By default, it enables keyboards, touchpads, and trackpoints.
 
 - `~/.convertible/tablet`: Called when switched to tablet mode.
 
-By default, it disables keyboards, touchpads, and trackpoints.
+By default, it starts auto-maximizing and disables keyboards, touchpads, and
+trackpoints.
 

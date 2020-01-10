@@ -4,3 +4,4 @@
 # A callback script called when switched to tablet mode
 #
 
+tablet-maxwin & # Auto-maximizing windows
