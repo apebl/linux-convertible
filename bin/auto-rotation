@@ -55,38 +55,62 @@ rotate() {
     done <<<"$input_devs"
 }
 
+get_current() {
+    orien="$(xrandr |
+        grep -oP '^[A-Za-z0-9_-]+ connected primary [0-9x+]+ ([a-z]+)' |
+        grep -oP '(right|inverted|left)$')"
+    [ -z "$orien" ] && echo normal || echo $orien
+}
+
 first=true
-state=none
+state=$(get_current)
 while true; do
     [ ! -f "$ROTLOCK_FILE" ] && echo unlocked > "$ROTLOCK_FILE"
     rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
-    [ "$rotlock" = "locked" ] && { sleep 1; continue; }
+    current=$(get_current)
 
-    ax=$(cat "$dev/in_accel_x_raw")
-    ay=$(cat "$dev/in_accel_y_raw")
-    ax=$(echo "$ax * $scale" | bc)
-    ay=$(echo "$ay * $scale" | bc)
+    if [ "$rotlock" != "locked" ]; then
+        ax=$(cat "$dev/in_accel_x_raw")
+        ay=$(cat "$dev/in_accel_y_raw")
+        ax=$(echo "$ax * $scale" | bc)
+        ay=$(echo "$ay * $scale" | bc)
 
-    current="$(xrandr |
-        grep -oP '^[A-Za-z0-9_-]+ connected primary [0-9x+]+ ([a-z]+)' |
-        grep -oP '(right|inverted|left)$')"
-
-    if ([ "$state" != normal ] || [ ! -z "$current" ] || $first) && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
-        rotate normal
-        "$BASEDIR/landscape"
-        state=normal
-    elif ([ "$state" != right ] || [ "$current" != right ] || $first) && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
-        rotate right
-        "$BASEDIR/portrait"
-        state=right
-    elif ([ "$state" != inverted ] || [ "$current" != inverted ] || $first) && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
-        rotate inverted
-        "$BASEDIR/landscape"
-        state=inverted
-    elif ([ "$state" != left ] || [ "$current" != left ] || $first) && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
-        rotate left
-        "$BASEDIR/portrait"
-        state=left
+        if ([ "$state" != normal ] || [ "$current" != normal ] || $first) && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
+            rotate normal
+            "$BASEDIR/landscape"
+            state=normal
+        elif ([ "$state" != right ] || [ "$current" != right ] || $first) && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
+            rotate right
+            "$BASEDIR/portrait"
+            state=right
+        elif ([ "$state" != inverted ] || [ "$current" != inverted ] || $first) && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
+            rotate inverted
+            "$BASEDIR/landscape"
+            state=inverted
+        elif ([ "$state" != left ] || [ "$current" != left ] || $first) && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
+            rotate left
+            "$BASEDIR/portrait"
+            state=left
+        fi
+    else
+        ([ "$state" == "$current" ] && ! $first) && { sleep 1; continue; }
+        if ([ "$current" != normal ] || $first) && [ "$state" == normal ]; then
+            rotate normal
+            "$BASEDIR/landscape"
+            state=normal
+        elif ([ "$current" != right ] || $first) && [ "$state" == right ]; then
+            rotate right
+            "$BASEDIR/portrait"
+            state=right
+        elif ([ "$current" != inverted ] || $first) && [ "$state" == inverted ]; then
+            rotate inverted
+            "$BASEDIR/landscape"
+            state=inverted
+        elif ([ "$current" != left ] || $first) && [ "$state" == left ]; then
+            rotate left
+            "$BASEDIR/portrait"
+            state=left
+        fi
     fi
     first=false
     sleep 1
