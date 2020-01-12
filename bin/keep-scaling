@@ -19,7 +19,7 @@ PIXELS="$(xrandr | grep -oP '(?<=connected primary )([0-9x]+)')"
 
 while true; do
     xrandr --output "$OUTPUT" --scale-from "$PIXELS"
-    sleep 1
+    sleep 0.5
 done
 
 ) 9>"$LOCKFILE"

@@ -113,7 +113,7 @@ while true; do
         fi
     fi
     first=false
-    sleep 1
+    sleep 0.5
 done
 
 ) 9>"$LOCKFILE"
