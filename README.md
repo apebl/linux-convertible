@@ -4,8 +4,8 @@ Tools for using 2-in-1 convertible laptops with Linux
 
 ## Features
 
-- Auto-rotation
-- Rotation lock
+- Auto-rotation and rotation lock (if DE doesn't provide it)
+- Orientation handlers
 - Auto-maximizing windows in tablet mode
 - Toggle between laptop and tablet mode manually
 - Recovering xrandr orientation and scaling from abnormal xrandr changes
@@ -39,7 +39,8 @@ Use application entries `Tablet Mode` and `Rotation Lock` created in the
 applications menu.
 
 - Tablet Mode: Toggle tablet mode
-- Rotation Lock: Toggle screen rotation lock
+- Rotation Lock: Toggle screen rotation lock (This doesn't work if DE provides
+its auto-rotation)
 
 ## Configuration
 

@@ -16,45 +16,6 @@ ROTLOCK_FILE="$BASEDIR/.rotation-lock"
 (
 flock -n 9 || exit 1
 
-OUTPUT="$(xrandr | grep -oP '^([A-Za-z0-9_-]+)(?= connected primary)')"
-if [ -z "$OUTPUT" ]; then
-    echo "Xrandr output not found" >&2
-    exit 1
-fi
-
-if ! cat /sys/bus/iio/devices/iio\:device*/name | grep -q accel; then
-    echo "Accellerator not found" >&2
-    exit 1
-fi
-
-for dev in /sys/bus/iio/devices/iio\:device*; do
-	[ -z "$(cat "$dev/name" | grep accel)" ] || break
-done
-
-scale=$(cat "$dev/in_accel_scale")
-G=7 # (m^2 / s) sensibility, gravity trigger
-
-input_devs=$(xinput list |
-    grep -oP '(?<=↳ )[A-Za-z0-9_: -]+?(?=\s*id=)' |
-    grep -iP 'wacom|pen|stylus|finger|touch|trackpoint')
-
-rotate() {
-    rot=$1
-    xrandr --output "$OUTPUT" --rotate $rot
-    while read -r input_dev
-    do
-        if [ $rot = normal ]; then
-            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1
-        elif [ $rot = right ]; then
-            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
-        elif [ $rot = inverted ]; then
-            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" -1 0 1 0 -1 1 0 0 1
-        elif [ $rot = left ]; then
-            xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
-        fi
-    done <<<"$input_devs"
-}
-
 get_current() {
     orien="$(xrandr |
         grep -oP '^[A-Za-z0-9_-]+ connected primary [0-9x+]+ ([a-z]+)' |
@@ -62,59 +23,128 @@ get_current() {
     [ -z "$orien" ] && echo normal || echo $orien
 }
 
-first=true
-state=$(get_current)
-while true; do
-    [ ! -f "$ROTLOCK_FILE" ] && echo unlocked > "$ROTLOCK_FILE"
-    rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
-    current=$(get_current)
-
-    if [ "$rotlock" != "locked" ]; then
-        ax=$(cat "$dev/in_accel_x_raw")
-        ay=$(cat "$dev/in_accel_y_raw")
-        ax=$(echo "$ax * $scale" | bc)
-        ay=$(echo "$ay * $scale" | bc)
-
-        if ([ "$state" != normal ] || [ "$current" != normal ] || $first) && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
-            rotate normal
-            "$BASEDIR/landscape"
-            state=normal
-        elif ([ "$state" != right ] || [ "$current" != right ] || $first) && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
-            rotate right
-            "$BASEDIR/portrait"
-            state=right
-        elif ([ "$state" != inverted ] || [ "$current" != inverted ] || $first) && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
-            rotate inverted
-            "$BASEDIR/landscape"
-            state=inverted
-        elif ([ "$state" != left ] || [ "$current" != left ] || $first) && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
-            rotate left
-            "$BASEDIR/portrait"
-            state=left
-        fi
+if [ -z "$USE_DE_ORIEN"]; then
+    if command -v iio-sensor-proxy && (echo "$DESKTOP_SESSION" | grep -q "gnome"); then
+        USE_DE_ORIEN=1
     else
-        ([ "$state" == "$current" ] && ! $first) && { sleep 1; continue; }
-        if ([ "$current" != normal ] || $first) && [ "$state" == normal ]; then
-            rotate normal
+        USE_DE_ORIEN=0
+    fi
+fi
+
+# Use DE's auto-rotation if available
+if [ "$USE_DE_ORIEN" -eq 1 ]; then
+    state=none
+    while true; do
+        current=$(get_current)
+        if ([ "$state" != "$current" ] && [ "$current" = normal ]); then
             "$BASEDIR/landscape"
             state=normal
-        elif ([ "$current" != right ] || $first) && [ "$state" == right ]; then
-            rotate right
+        elif ([ "$state" != "$current" ] && [ "$current" = right ]); then
             "$BASEDIR/portrait"
             state=right
-        elif ([ "$current" != inverted ] || $first) && [ "$state" == inverted ]; then
-            rotate inverted
+        elif ([ "$state" != "$current" ] && [ "$current" = inverted ]); then
             "$BASEDIR/landscape"
             state=inverted
-        elif ([ "$current" != left ] || $first) && [ "$state" == left ]; then
-            rotate left
+        elif ([ "$state" != "$current" ] && [ "$current" = left ]); then
             "$BASEDIR/portrait"
             state=left
         fi
+        sleep 0.2
+    done
+else
+    OUTPUT="$(xrandr | grep -oP '^([A-Za-z0-9_-]+)(?= connected primary)')"
+    if [ -z "$OUTPUT" ]; then
+        echo "Xrandr output not found" >&2
+        exit 1
     fi
-    first=false
-    sleep 0.5
-done
+
+    if ! cat /sys/bus/iio/devices/iio\:device*/name | grep -q accel; then
+        echo "Accellerator not found" >&2
+        exit 1
+    fi
+
+    for dev in /sys/bus/iio/devices/iio\:device*; do
+	    [ -z "$(cat "$dev/name" | grep accel)" ] || break
+    done
+
+    scale=$(cat "$dev/in_accel_scale")
+    G=7 # (m^2 / s) sensibility, gravity trigger
+
+    input_devs=$(xinput list |
+        grep -oP '(?<=↳ )[A-Za-z0-9_: -]+?(?=\s*id=)' |
+        grep -iP 'wacom|pen|stylus|finger|touch|trackpoint')
+
+    rotate() {
+        rot=$1
+        xrandr --output "$OUTPUT" --rotate $rot
+        while read -r input_dev
+        do
+            if [ $rot = normal ]; then
+                xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 1 0 0 0 1 0 0 0 1
+            elif [ $rot = right ]; then
+                xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
+            elif [ $rot = inverted ]; then
+                xinput set-prop "$input_dev" "Coordinate Transformation Matrix" -1 0 1 0 -1 1 0 0 1
+            elif [ $rot = left ]; then
+                xinput set-prop "$input_dev" "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
+            fi
+        done <<<"$input_devs"
+    }
+
+    first=true
+    state=$(get_current)
+    while true; do
+        [ ! -f "$ROTLOCK_FILE" ] && echo unlocked > "$ROTLOCK_FILE"
+        rotlock="$(cat "$ROTLOCK_FILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
+        current=$(get_current)
+
+        if [ "$rotlock" != "locked" ]; then
+            ax=$(cat "$dev/in_accel_x_raw")
+            ay=$(cat "$dev/in_accel_y_raw")
+            ax=$(echo "$ax * $scale" | bc)
+            ay=$(echo "$ay * $scale" | bc)
+
+            if ([ "$state" != normal ] || [ "$current" != normal ] || $first) && [ $(echo "$ay <= -$G" | bc) -gt 0 ]; then
+                rotate normal
+                "$BASEDIR/landscape"
+                state=normal
+            elif ([ "$state" != right ] || [ "$current" != right ] || $first) && [ $(echo "$ax <= -$G" | bc) -gt 0 ]; then
+                rotate right
+                "$BASEDIR/portrait"
+                state=right
+            elif ([ "$state" != inverted ] || [ "$current" != inverted ] || $first) && [ $(echo "$ay >= $G" | bc) -gt 0 ]; then
+                rotate inverted
+                "$BASEDIR/landscape"
+                state=inverted
+            elif ([ "$state" != left ] || [ "$current" != left ] || $first) && [ $(echo "$ax >= $G" | bc) -gt 0 ]; then
+                rotate left
+                "$BASEDIR/portrait"
+                state=left
+            fi
+        else
+            ([ "$state" == "$current" ] && ! $first) && { sleep 1; continue; }
+            if ([ "$current" != normal ] || $first) && [ "$state" == normal ]; then
+                rotate normal
+                "$BASEDIR/landscape"
+                state=normal
+            elif ([ "$current" != right ] || $first) && [ "$state" == right ]; then
+                rotate right
+                "$BASEDIR/portrait"
+                state=right
+            elif ([ "$current" != inverted ] || $first) && [ "$state" == inverted ]; then
+                rotate inverted
+                "$BASEDIR/landscape"
+                state=inverted
+            elif ([ "$current" != left ] || $first) && [ "$state" == left ]; then
+                rotate left
+                "$BASEDIR/portrait"
+                state=left
+            fi
+        fi
+        first=false
+        sleep 0.5
+    done
+fi
 
 ) 9>"$LOCKFILE"
 
