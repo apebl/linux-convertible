@@ -5,3 +5,13 @@
 #
 
 tablet-maxwin & # Auto-maximizing windows
+
+# Disable laptop input devices
+if [ "$XDG_SESSION_TYPE" = "x11" ]; then
+    xinput list --name-only |
+    grep -iP 'keyboard|touchpad|trackpoint' |
+    grep --invert-match 'Virtual core' |
+    while read -r dev; do
+        xinput disable "$dev"
+    done
+fi

@@ -4,3 +4,12 @@
 # A callback script called when switched to laptop mode
 #
 
+# Enable laptop input devices
+if [ "$XDG_SESSION_TYPE" = "x11" ]; then
+    xinput list --name-only |
+    grep -iP 'keyboard|touchpad|trackpoint' |
+    grep --invert-match 'Virtual core' |
+    while read -r dev; do
+        xinput enable "$dev"
+    done
+fi
