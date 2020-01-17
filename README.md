@@ -5,17 +5,19 @@ Tools for using 2-in-1 convertible laptops with Linux
 ## Features
 
 - Auto-rotation and rotation lock (if DE doesn't provide it)
-- Orientation handlers
-- Auto-maximizing windows in tablet mode
+- Detecting orientation change
+- Auto-maximizing windows in tablet mode (optional)
 - Toggle between laptop and tablet mode manually
 - Recovering xrandr orientation and scaling from abnormal xrandr changes
 
 ## Requirements
 
-- xinput, xrandr (xinput)
-- wmctrl
-- xdotool
 - notify-send (libnotify)
+
+For X11 (not required for Wayland):
+
+- xinput, xrandr (xinput)
+- wmctrl, xdotool (Not required for GNOME)
 
 ## Install
 
@@ -39,8 +41,7 @@ Use application entries `Tablet Mode` and `Rotation Lock` created in the
 applications menu.
 
 - Tablet Mode: Toggle tablet mode
-- Rotation Lock: Toggle screen rotation lock (This doesn't work if DE provides
-its auto-rotation)
+- Rotation Lock: Toggle screen rotation lock
 
 ## Configuration
 
