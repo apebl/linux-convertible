@@ -23,11 +23,25 @@ case "$1" in
     ;;
 --lock)
     echo "locked" > "$ROTLOCK_FILE"
+    gsettings set org.gnome.settings-daemon.peripherals.touchscreen orientation-lock true
     ;;
 --unlock)
     echo "unlocked" > "$ROTLOCK_FILE"
+    gsettings set org.gnome.settings-daemon.peripherals.touchscreen orientation-lock false
     ;;
 --toggle)
+    if command -v iio-sensor-proxy >/dev/null 2>&1 && (echo "$DESKTOP_SESSION" | grep -q "gnome"); then
+        locked=$(gsettings get org.gnome.settings-daemon.peripherals.touchscreen orientation-lock)
+        if [ "$locked" = true ]; then
+            echo "unlocked" > "$ROTLOCK_FILE"
+            gsettings set org.gnome.settings-daemon.peripherals.touchscreen orientation-lock false
+        else
+            echo "locked" > "$ROTLOCK_FILE"
+            gsettings set org.gnome.settings-daemon.peripherals.touchscreen orientation-lock true
+        fi
+        exit
+    fi
+
     if [ ! -f "$ROTLOCK_FILE" ]; then
         echo "locked" > "$ROTLOCK_FILE"
         notify-send --icon=rotation-locked-symbolic "Rotation locked" "Screen rotation locked."
