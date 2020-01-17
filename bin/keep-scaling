@@ -14,6 +14,11 @@ LOCKFILE="$BASEDIR/.scale.lock"
 (
 flock -n 9 || exit 1
 
+if [ "$XDG_SESSION_TYPE" != "x11" ]; then
+    echo "Not X11"
+    exit
+fi
+
 OUTPUT="$(xrandr | grep -oP '^([A-Za-z0-9_-]+)(?= connected primary)')"
 PIXELS="$(xrandr | grep -oP '(?<=connected primary )([0-9x]+)')"
 

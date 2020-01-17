@@ -16,6 +16,29 @@ ROTLOCK_FILE="$BASEDIR/.rotation-lock"
 (
 flock -n 9 || exit 1
 
+# Only callbacks are supported in Wayland
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    state=none
+    while true; do
+        width="$(xrandr | grep -oP 'XWAYLAND0 connected \d+x\d+' | grep -oP '\d+(?=x\d)')"
+        height="$(xrandr | grep -oP 'XWAYLAND0 connected \d+x\d+' | grep -oP '\d+$')"
+        if [ "$width" -gt "$height" ] && [ "$state" != landscape ]; then
+            "$BASEDIR/landscape"
+            state=landscape
+        elif [ "$width" -lt "$height" ] && [ "$state" != portrait ]; then
+            "$BASEDIR/portrait"
+            state=portrait
+        fi
+        sleep 0.2
+    done
+    exit
+fi
+
+if [ "$XDG_SESSION_TYPE" != "x11" ]; then
+    echo "Unsupported windowing system: $XDG_SESSION_TYPE"
+    exit
+fi
+
 get_current() {
     orien="$(xrandr |
         grep -oP '^[A-Za-z0-9_-]+ connected primary [0-9x+]+ ([a-z]+)' |
@@ -24,7 +47,7 @@ get_current() {
 }
 
 if [ -z "$USE_DE_ORIEN"]; then
-    if command -v iio-sensor-proxy && (echo "$DESKTOP_SESSION" | grep -q "gnome"); then
+    if command -v iio-sensor-proxy >/dev/null 2>&1 && (echo "$DESKTOP_SESSION" | grep -q "gnome"); then
         USE_DE_ORIEN=1
     else
         USE_DE_ORIEN=0

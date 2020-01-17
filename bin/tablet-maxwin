@@ -22,12 +22,29 @@ fi
 (
 flock -n 9 || exit 1
 
-while true; do
+check_mode() {
     [ -f "$MODEFILE" ] || exit 1
     mode="$(cat "$MODEFILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')"
     [ "$mode" = "tablet" ] || exit
-    wmctrl -ir $(xdotool getactivewindow) -b add,maximized_vert,maximized_horz
-    sleep 0.2
-done
+}
+
+if echo "$DESKTOP_SESSION" | grep -q "gnome"; then
+    while true; do
+        check_mode
+        gdbus call --session \
+                   --dest org.gnome.Shell \
+                   --object-path /org/gnome/Shell \
+                   --method org.gnome.Shell.Eval "global.display.focus_window.maximize(Meta.MaximizeFlags.BOTH)"
+        sleep 0.2
+    done
+elif [ "$XDG_SESSION_TYPE" = "x11" ]; then
+    while true; do
+        check_mode
+        wmctrl -ir $(xdotool getactivewindow) -b add,maximized_vert,maximized_horz
+        sleep 0.2
+    done
+else
+    echo "Unsupported environment: $DESKTOP_SESSION with $XDG_SESSION_TYPE"
+fi
 
 ) 9>"$LOCKFILE"
