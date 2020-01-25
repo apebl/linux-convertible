@@ -7,6 +7,8 @@
 # https://gist.githubusercontent.com/ei-grad/4d9d23b1463a99d24a8d/raw/rotate.py
 #
 
+trap 'exit' HUP
+
 BASEDIR="$HOME/.convertible"
 mkdir -p "$BASEDIR"
 

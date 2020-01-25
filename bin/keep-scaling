@@ -5,6 +5,7 @@
 #
 
 set -e
+trap 'exit' HUP
 
 BASEDIR="$HOME/.convertible"
 mkdir -p "$BASEDIR"
