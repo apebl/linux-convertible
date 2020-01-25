@@ -30,7 +30,8 @@ cd linux-convertible
 You might need to add `$HOME/.local/bin` to your PATH:
 
 ```sh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+mkdir -p ~/.config/environment.d
+echo 'PATH=$HOME/.local/bin:$PATH' >> ~/.config/environment.d/path.conf
 ```
 
 And restart your session. (log-out & log-in again)
