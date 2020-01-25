@@ -49,11 +49,7 @@ There are callback script files in `~/.convertible`:
 
 - `~/.convertible/landscape`: Called when switched to landscape orientation.
 
-By default, it moves the dock panel to the left. (GNOME Shell dash-to-dock)
-
 - `~/.convertible/portrait`: Called when switched to portrait orientation.
-
-By default, it moves the dock panel to the bottom. (GNOME Shell dash-to-dock)
 
 - `~/.convertible/laptop`: Called when switched to laptop mode.
 
