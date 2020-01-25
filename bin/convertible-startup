@@ -4,6 +4,7 @@ BASEDIR="$HOME/.convertible"
 mkdir -p "$BASEDIR"
 MODEFILE="$BASEDIR/.mode"
 
+"$BASEDIR/display"
 if [ ! -f "$MODEFILE" ] || [ "$(cat "$MODEFILE" | tr -d '\n' | sed 's/^\s*//;s/\s*$//')" == "laptop" ]; then
     "$BASEDIR/laptop"
 else

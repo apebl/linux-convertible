@@ -61,3 +61,14 @@ By default, it enables keyboards, touchpads, and trackpoints.
 By default, it starts auto-maximizing and disables keyboards, touchpads, and
 trackpoints.
 
+- `~/.convertible/display`: Called once on session startup, before
+linux-convertible starts.
+
+You can put your display settings to this script, and linux-convertible keeps
+the settings. e.g.:
+
+```sh
+#!/bin/sh
+[ "$XDG_SESSION_TYPE" = "x11" ] && xrandr --output eDP1 --scale 1.6
+```
+
