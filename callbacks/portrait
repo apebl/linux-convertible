@@ -1,6 +1,6 @@
 #!/bin/sh
 
 #
-# A callback script called when switched to portrait orientation
+# A callback script called when changed to portrait orientation
 #
 

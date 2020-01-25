@@ -47,9 +47,9 @@ applications menu.
 
 There are callback script files in `~/.convertible`:
 
-- `~/.convertible/landscape`: Called when switched to landscape orientation.
+- `~/.convertible/landscape`: Called when changed to landscape orientation.
 
-- `~/.convertible/portrait`: Called when switched to portrait orientation.
+- `~/.convertible/portrait`: Called when changed to portrait orientation.
 
 - `~/.convertible/laptop`: Called when switched to laptop mode.
 

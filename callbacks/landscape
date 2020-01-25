@@ -1,6 +1,6 @@
 #!/bin/sh
 
 #
-# A callback script called when switched to landscape orientation
+# A callback script called when changed to landscape orientation
 #
 
