@@ -22,7 +22,7 @@ For X11 (not required for Wayland):
 ## Install
 
 ```sh
-git clone https://gitlab.com/kosmospredanie/linux-convertible.git
+git clone https://github.com/kosmospredanie/linux-convertible.git
 cd linux-convertible
 ./install.sh
 ```
